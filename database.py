@@ -65,7 +65,7 @@ class DB:
                 # for better perfomance, each 10 new material added to db one commit will be performed,
                 self.conn.commit()
 
-        return self.get_material({'name': name}).id
+        return self.get_material({'name': name})[0].id
 
     def get_material(self, info={}):
         # gets the info of a material and returns its id in database
@@ -97,9 +97,13 @@ class DB:
             material_id = material[0].id
 
         # prventing duplication
-        if self.get_price({'material_id': material_id, 'date': int(date), 'price': int(price)}):
+        prices = self.get_price({'material_id': material_id})
+        if prices:
             # price exists in db
-            return price[0].id
+            for price in prices:
+                if (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds() - price.date < 2 * 3600: 
+                    # last update was less than 2 hours before
+                    return price.id
         
         sql = 'INSERT INTO Prices(material_id, date, price) VALUES (?, ?, ?)'
         self.cur.execute(sql, (material_id, date, price))
@@ -130,7 +134,6 @@ class DB:
         
 
     def __del__(self):
-        print('finishing ...')
         self.conn.commit()
         self.conn.close()
 

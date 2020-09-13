@@ -1,6 +1,7 @@
 import sqlite3
 import datetime
 import material
+import price
 
 class DB:
 
@@ -29,6 +30,31 @@ class DB:
 
         ''')
 
+    def _make_where_clouse_to_insert(self, info, sql):
+        # makes a where clouse according to info and sql. info is a dict and sql is a string
+        # e.g: info={'name': 'mat'}, sql='SELECT * FROM MATERIAL' 
+        # --> return: ("SELECT * FROM MATERIAL WHERE name=?", [mat])
+        if type(info) != dict or type(sql) != str:
+            raise TypeError('info argument must be a dict and sql must be a string!')
+
+        if not sql.lower().strip().endswith('where'):
+            sql += ' WHERE '
+        
+        values = list()
+        for key in info:
+            sql += f'{key.lower()}=? AND '
+            values.append(info[key])
+            
+        if sql.endswith('AND '):
+            # in each iteration of for loop above, an "AND" is added at the end of sql, removing that "AND"
+            sql = sql[:-5] 
+        else:
+            # info was empty, returning all of the materials, removing last "WHERE" from sql statement
+            sql = sql[:-7]
+        
+        return sql, values
+
+
     def add_material(self, name):
         # adds a new material in database if it doesn't exists, returns its material_id.
         if not self.get_material({'name': name}):
@@ -39,7 +65,7 @@ class DB:
                 # for better perfomance, each 10 new material added to db one commit will be performed,
                 self.conn.commit()
 
-        return self.get_material({'name': name})[0].id
+        return self.get_material({'name': name}).id
 
     def get_material(self, info={}):
         # gets the info of a material and returns its id in database
@@ -50,19 +76,9 @@ class DB:
         if type(info) != dict:
             raise TypeError('info argument must be a dict!')
 
-        sql = 'SELECT material_id, name FROM materials WHERE '
-        values = list()
-        
-        for key in info:
-            sql += f'{key.lower()}=? AND '
-            values.append(info[key])
-        
-        if sql.endswith('AND '):
-            # in each iteration of for loop above, an "AND" is added at the end of sql, removing that "AND"
-            sql = sql[:-5] 
-        else:
-            # info was empty, returning all of the materials, removing last "WHERE" from sql statement
-            sql = sql[:-7]
+        # making a select statement according to info. sql will be something like: SELECT ... FROM ... WHERE name=?
+        # values is a list of corresponding "?" of sql
+        sql, values = self._make_where_clouse_to_insert(info, 'SELECT material_id, name FROM materials WHERE ')
 
         self.cur.execute(sql, values)
         fetched = list(self.cur.fetchall())
@@ -72,7 +88,46 @@ class DB:
         
         return fetched
 
+    def add_price(self, material_name, date, price):
+        # gets price info and adds a new price record in table:
+        material = self.get_material({'name': material_name})
+        if not material:
+            material_id = self.add_material(material_name)
+        else:
+            material_id = material[0].id
 
+        # prventing duplication
+        if self.get_price({'material_id': material_id, 'date': int(date), 'price': int(price)}):
+            # price exists in db
+            return price[0].id
+        
+        sql = 'INSERT INTO Prices(material_id, date, price) VALUES (?, ?, ?)'
+        self.cur.execute(sql, (material_id, date, price))
+
+        self.total_prices += 1
+        if self.total_prices % 10 == 0:
+            self.conn.commit()
+
+        return self.get_price({'material_id': material_id, 'date': int(date), 'price': int(price)})[0].id
+
+
+    def get_price(self, info):
+        if type(info) != dict:
+            raise TypeError('info must be a dict!')
+
+        # making a select statement according to info. sql will be something like: SELECT ... FROM ... WHERE name=?
+        # values is a list of corresponding "?" of sql
+        sql, values = self._make_where_clouse_to_insert(info, 'SELECT price_id, material_id, price, date FROM Prices')
+
+        self.cur.execute(sql, values)
+        fetched = list(self.cur.fetchall())
+
+        for i in range(len(fetched)):
+            fetched[i] = price.price(*fetched[i])
+        
+        return fetched
+
+        
 
     def __del__(self):
         print('finishing ...')

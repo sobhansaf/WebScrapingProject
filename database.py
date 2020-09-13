@@ -5,10 +5,10 @@ import price
 
 class DB:
 
-    def __init__(self, dbname='data.sqlite3'):
+    def __init__(self, dbfilename='data.sqlite3'):
         self.total_materials = 0
         self.total_prices = 0
-        self.conn = sqlite3.connect(dbname)
+        self.conn = sqlite3.connect(dbfilename)
         self.cur = self.conn.cursor()
         self.cur.executescript('''
         CREATE TABLE IF NOT EXISTS Materials (
@@ -131,7 +131,18 @@ class DB:
         
         return fetched
 
-        
+    
+    def get_all_material_data(self, material_name):
+        # gets the name of a material and returns all of the records associated with this material
+        sql = '''
+            SELECT Prices.date, Prices.price
+            FROM Materials JOIN Prices ON Prices.material_id = Materials.material_id
+            WHERE Materials.name=?
+            ORDER BY Prices.date ASC
+        '''
+
+        self.cur.execute(sql, (material_name, ))
+        return self.cur.fetchall()
 
     def __del__(self):
         self.conn.commit()

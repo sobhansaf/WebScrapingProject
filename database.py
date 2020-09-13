@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import material
 
 class DB:
 
@@ -38,11 +39,12 @@ class DB:
                 # for better perfomance, each 10 new material added to db one commit will be performed,
                 self.conn.commit()
 
-        return self.get_material({'name': name})[0]
+        return self.get_material({'name': name})[0].id
 
     def get_material(self, info={}):
         # gets the info of a material and returns its id in database
         # info is a dict, containing infromation of a record -> info = {'name': 'gold'} , info = {'material_id': 24} , info={}
+        # returns a list of materials in form of some material objects
         # returns all of the materials if info is an empty dict
         # returns none if not found in database
         if type(info) != dict:
@@ -63,10 +65,18 @@ class DB:
             sql = sql[:-7]
 
         self.cur.execute(sql, values)
-        return self.cur.fetchall()
+        fetched = list(self.cur.fetchall())
+
+        for i in range(len(fetched)):
+            fetched[i] = material.material(*fetched[i])
+        
+        return fetched
+
+
 
     def __del__(self):
         print('finishing ...')
         self.conn.commit()
         self.conn.close()
+
 

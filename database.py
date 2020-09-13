@@ -100,10 +100,10 @@ class DB:
         prices = self.get_price({'material_id': material_id})
         if prices:
             # price exists in db
-            for price in prices:
-                if (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds() - price.date < 2 * 3600: 
+            for price_ in prices:
+                if (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds() - price_.date < 2 * 3600: 
                     # last update was less than 2 hours before
-                    return price.id
+                    return price_.id
         
         sql = 'INSERT INTO Prices(material_id, date, price) VALUES (?, ?, ?)'
         self.cur.execute(sql, (material_id, date, price))

@@ -1,7 +1,7 @@
 import sqlite3
 import datetime
-import material
-import price
+from model import material
+from model import price
 
 class DB:
 

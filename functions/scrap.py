@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-import database
-import material
-import price
+from model import database
+from model import material
+from model import price
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options  
 from datetime import datetime

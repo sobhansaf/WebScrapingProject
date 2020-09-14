@@ -1,8 +1,8 @@
 from optparse import OptionParser
-import scrap
-import database
-import plot
 import datetime
+from model import database
+from functions import scrap
+from functions import plot
 
 def separate(items):
     # gets a list of x and y and returns two lists of x and y separately. e.g:[(1, 2), (3, 4)] -> [1, 3], [2, 4]

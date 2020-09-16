@@ -12,9 +12,15 @@ def scrap(dbfilename, waiting_time, path_to_driver):
 
     url = 'https://www.tgju.org/'
 
-    option = webdriver.ChromeOptions()
-    option.add_argument('headless')
-    driver = webdriver.Chrome(path_to_driver ,options=option)
+    # option = webdriver.ChromeOptions()
+    # option.add_argument('headless')
+    # driver = webdriver.Chrome(path_to_driver ,options=option)
+
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(path_to_driver, chrome_options=chrome_options)
 
     try:
         driver.get(url)
